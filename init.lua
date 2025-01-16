@@ -254,7 +254,67 @@ require('lazy').setup({
       },
     },
   },
+  -- 在 lazy.nvim 的插件列表中添加
+  {
+    'akinsho/toggleterm.nvim',
+    version = '*',
+    config = function()
+      require('toggleterm').setup {
+        size = 20,
+        open_mapping = [[<c-\>]], -- 使用 Ctrl + \ 打开关闭终端
+        hide_numbers = true,
+        shade_terminals = true,
+        shading_factor = 2,
+        start_in_insert = true,
+        insert_mappings = true,
+        persist_size = true,
+        direction = 'float', -- 'vertical' | 'horizontal' | 'tab' | 'float'
+        float_opts = {
+          border = 'curved',
+          winblend = 0,
+        },
+      }
 
+      -- 自定义终端快捷键
+      function _G.set_terminal_keymaps()
+        local opts = { buffer = 0 }
+        vim.keymap.set('t', '<esc>', [[<C-\><C-n>]], opts) -- 使用 ESC 退出终端模式
+        vim.keymap.set('t', '<C-h>', [[<Cmd>wincmd h<CR>]], opts) -- 窗口之间导航
+        vim.keymap.set('t', '<C-j>', [[<Cmd>wincmd j<CR>]], opts)
+        vim.keymap.set('t', '<C-k>', [[<Cmd>wincmd k<CR>]], opts)
+        vim.keymap.set('t', '<C-l>', [[<Cmd>wincmd l<CR>]], opts)
+      end
+
+      -- 进入终端时自动设置快捷键
+      vim.cmd 'autocmd! TermOpen term://* lua set_terminal_keymaps()'
+
+      -- 创建一些常用终端命令的快捷方式
+      local Terminal = require('toggleterm.terminal').Terminal
+
+      -- 创建 lazygit 终端
+      local lazygit = Terminal:new {
+        cmd = 'lazygit',
+        hidden = true,
+        direction = 'float',
+      }
+
+      -- 创建用于运行 npm 命令的终端
+      local npm_commands = Terminal:new {
+        hidden = true,
+        direction = 'horizontal',
+        size = 15,
+      }
+
+      -- 添加快捷键映射
+      vim.keymap.set('n', '<leader>lg', function()
+        lazygit:toggle()
+      end, { desc = 'LazyGit' })
+      vim.keymap.set('n', '<leader>nd', function()
+        npm_commands:toggle()
+        npm_commands:send 'npm run dev'
+      end, { desc = 'npm run dev' })
+    end,
+  },
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
   -- This is often very useful to both group configuration, as well as handle
@@ -939,7 +999,38 @@ require('lazy').setup({
   -- require 'kickstart.plugins.autopairs',
   -- require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  -- 首先在 lazy.nvim 的插件列表中添加 nvim-tree
+  {
+    'nvim-tree/nvim-tree.lua',
+    dependencies = {
+      'nvim-tree/nvim-web-devicons', -- 可选，用于显示文件图标
+    },
+    config = function()
+      -- 基础配置
+      require('nvim-tree').setup {
+        sort_by = 'case_sensitive',
+        view = {
+          width = 30,
+        },
+        renderer = {
+          group_empty = true,
+        },
+        filters = {
+          dotfiles = true,
+        },
+        sync_root_with_cwd = true,
+        respect_buf_cwd = true,
+        update_focused_file = {
+          enable = true, -- 启用当前文件高亮显示
+          update_root = true, -- 自动更新根目录
+          ignore_list = {},
+        },
+      }
 
+      -- 设置快捷键
+      vim.keymap.set('n', '<leader>e', ':NvimTreeToggle<CR>', { silent = true })
+    end,
+  },
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --
